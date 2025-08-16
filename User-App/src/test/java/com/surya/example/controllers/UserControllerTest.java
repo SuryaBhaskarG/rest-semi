@@ -1,8 +1,16 @@
 package com.surya.example.controllers;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +60,65 @@ class UserControllerTest {
     
     
     
-    
+    @Test
+    void getAllUsersTest() throws Exception {
+        List<User> users = List.of(
+                new User(1L, "Surya", "surya@gmail.com"),
+                new User(2L, "Ram", "ram@gmail.com")
+        );
+        Mockito.when(userService.findAllUser()).thenReturn(users);
+
+        mockMvc.perform(get("/getAllUsers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void deleteUserByIdTest() throws Exception {
+        Mockito.doNothing().when(userService).deleteUserById(1L);
+
+        mockMvc.perform(delete("/deleteUserById/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("user deleted Sucesfully!"));
+    }
+
+    @Test
+    void updateUserByIdTest() throws Exception {
+        User updated = new User(1L, "Updated", "updated@gmail.com");
+        Mockito.when(userService.updateUserById(Mockito.eq(1L), Mockito.any())).thenReturn(updated);
+
+        mockMvc.perform(put("/updateUserById/1")
+                .contentType("application/json")
+                .content("""
+                    { "name": "Updated", "email": "updated@gmail.com" }
+                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated"));
+    }
+
+    @Test
+    void patchUpdateUserByIdTest() throws Exception {
+        User patched = new User(1L, "Patched", "surya@gmail.com");
+        Mockito.when(userService.patchUpdateUserById(Mockito.eq(1L), Mockito.any())).thenReturn(patched);
+
+        mockMvc.perform(patch("/patchUpdateUserById/1")
+                .contentType("application/json")
+                .content("{ \"name\": \"Patched\" }"))   
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Patched"));
+    }
+
+
+    @Test
+    void getUsersByNameTest() throws Exception {
+        List<User> users = List.of(new User(1L, "Surya", "surya@gmail.com"));
+        Mockito.when(userService.getUsersByName("Surya")).thenReturn(users);
+
+        mockMvc.perform(get("/getUsersByName/Surya"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("Surya"));
+    }
     
     
     
